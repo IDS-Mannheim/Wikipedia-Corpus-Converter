@@ -21,9 +21,9 @@ public class WikiTalkUser {
 	private int counter;
 	private String userUri;
 	
-	public WikiTalkUser(String userUri) throws IOException {		
+	public WikiTalkUser(String language, String userUri) throws IOException {		
 		user = new HashMap<String, String>();
-		userWriter = Utilities.createWriter("talk-user.xml");
+		userWriter = Utilities.createWriter(language+"wiki-talk-user.xml");
 		userWriter.append("<listPerson>\n");		
 		counter=0;
 		this.userUri=userUri;

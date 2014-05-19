@@ -31,7 +31,7 @@ public class WikiTalkHandler {
 	private TagSoupParser tagSoupParser;
 	private Sweble2Parser swebleParser;	
 	private String posting="", language;
-	private boolean textFlag, sigFlag, baselineMode=true;
+	private boolean textFlag, sigFlag, baselineMode=false;
 	private WikiPage wikiPage;
 	private WikiStatistics wikiStatistics;
 	public WikiTalkUser user;
@@ -46,8 +46,8 @@ public class WikiTalkHandler {
 		swebleParser = new Sweble2Parser();
 		this.language = language;
 		this.wikiStatistics = wikiStatistics;		
-		this.user= new WikiTalkUser(language+".wikipedia.org/wiki/"+user+":");
-		this.time = new WikiTalkTime();
+		this.user= new WikiTalkUser(language, language+".wikipedia.org/wiki/"+user+":");
+		this.time = new WikiTalkTime(language);
 		
 		this.userLabel = user;
 		this.contributionLabel=contribution;

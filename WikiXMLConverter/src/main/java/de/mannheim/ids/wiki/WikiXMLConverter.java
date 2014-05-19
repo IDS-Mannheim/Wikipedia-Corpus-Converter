@@ -34,7 +34,7 @@ public class WikiXMLConverter {
 		//String[] namespaces = {"1"};
 		
 		LanguageProperties lp = new LanguageProperties(language,namespaces);				
-		String xmlOutputDir = "./xml"; 
+		String xmlOutputDir = "./xml"+language; 
 		try{
 		WikiXMLProcessor wxp = new WikiXMLProcessor(lp,namespaces);
 		wxp.createWikiXML(wikidump,xmlOutputDir);

@@ -17,8 +17,8 @@ public class WikiTalkTime {
 	private OutputStreamWriter timeWriter; 
 	private int counter;
 	
-	public WikiTalkTime() throws IOException{	
-		timeWriter = Utilities.createWriter("talk-timeline.xml");
+	public WikiTalkTime(String language) throws IOException{	
+		timeWriter = Utilities.createWriter(language+"wiki-talk-timeline.xml");
 		counter=0;
 		
 		timeWriter.append("<timeline>\n");		
