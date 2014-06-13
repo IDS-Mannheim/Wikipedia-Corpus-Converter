@@ -1,7 +1,6 @@
 package de.mannheim.ids.util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /** Set the language properties of a wikidump
@@ -45,6 +44,26 @@ public class LanguageProperties {
 			setTalk("Discussion");
 			setUser("Utilisateur");
 			setContribution("Spécial:Contributions");
+		}
+		else if (language.equals("hu")){
+			setTalk("Vita");
+			setUser("Szerkesztő");
+			setContribution("Speciális:Contributions");
+		}
+		else if (language.equals("it")){
+			setTalk("Discussione");
+			setUser("Utente");
+			setContribution("Speciale:Contributi");
+		}
+		else if (language.equals("no")){
+			setTalk("Diskusjon");
+			setUser("Bruker");
+			setContribution("Spesial:Contributions");
+		}
+		else if (language.equals("pl")){
+			setTalk("Dyskusja");
+			setUser("Wikipedysta");
+			setContribution("Specjalna:Wkład");
 		}
 	}
 

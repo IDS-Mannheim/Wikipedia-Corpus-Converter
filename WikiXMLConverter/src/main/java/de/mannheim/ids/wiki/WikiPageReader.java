@@ -3,7 +3,6 @@ package de.mannheim.ids.wiki;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
-
 import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,11 +73,14 @@ public class WikiPageReader {
 			}
 			else if(readFlag && !trimmedStrLine.equals("</mediawiki>")){
 				// Page title
-				if (trimmedStrLine.startsWith("<title>") ){
+				if (trimmedStrLine.startsWith("<title>") ){					
 					matcher = titlePattern.matcher(trimmedStrLine);
 					if (matcher.find()){
 						wikiPage.setPageTitle(matcher.group(1));
 						wikiPage.pageStructure += strLine+"\n";
+					}
+					else{ // Pagetitle cannot be parsed. 						
+						readFlag = false; // Skip page
 					}
 				}
 				// Page namespace
