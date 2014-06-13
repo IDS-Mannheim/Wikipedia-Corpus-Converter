@@ -460,6 +460,18 @@ public class XCESWriter {
 		else if (lang.equals("fr")){
 			return "Französisch";
 		}
+		else if (lang.equals("hu")){
+			return "Ungarisch";			
+		}
+		else if (lang.equals("it")){
+			return "Italienisch";			
+		}
+		else if (lang.equals("no")){
+			return "Norwegisch";			
+		}
+		else if (lang.equals("pl")){
+			return "Polnisch";			
+		}
 		return "Unbekannt"; 
 	}
 }

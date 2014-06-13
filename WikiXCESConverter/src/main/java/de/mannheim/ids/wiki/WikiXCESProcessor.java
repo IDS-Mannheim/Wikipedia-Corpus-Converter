@@ -90,8 +90,10 @@ public class WikiXCESProcessor {
 		transformer.setParameter(new QName("pubDay"), new XdmAtomicValue(dumpFilename.substring(11,13)));
 		transformer.setParameter(new QName("pubMonth"), new XdmAtomicValue(dumpFilename.substring(13,15)));
 		transformer.setParameter(new QName("pubYear"), new XdmAtomicValue(year));
-		transformer.setParameter(new QName("inflectives"), new XdmAtomicValue(inflectives));
 		
+		if (inflectives !=null)
+			transformer.setParameter(new QName("inflectives"), new XdmAtomicValue("../"+inflectives));
+
 		// Setup temporary xces file
 		xces = new File(lang+"wiki-"+type+"-temp.xces");
 		errorHandler = new XCESErrorHandler(type,origfilename);

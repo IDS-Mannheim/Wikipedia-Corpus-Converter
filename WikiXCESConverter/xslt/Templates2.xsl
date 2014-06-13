@@ -14,7 +14,7 @@
 
     <xsl:output name="text" indent="yes" omit-xml-declaration="yes"/>
     
-    <xsl:param name="inflectives" required="yes"/>
+    <xsl:param name="inflectives"/>
         
     <xsl:param name="phraseNames">
         <name>small</name>

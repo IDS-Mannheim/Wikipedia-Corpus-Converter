@@ -41,10 +41,10 @@ public class WikiPage {
 	public void setPageIndex(boolean isDiscussion, String talk) throws IOException {
 		int start = talk.length() +1;
 		if (isDiscussion){						
-			pageIndex = Utilities.normalizeIndex(this.pageTitle.substring(start, start+1), this.indexList);
+			pageIndex = Utilities.normalizeIndex(this.pageTitle.substring(start, start+1), indexList);
 		}
 		else {
-			pageIndex = Utilities.normalizeIndex(this.pageTitle.substring(0,1), this.indexList);			
+			pageIndex = Utilities.normalizeIndex(this.pageTitle.substring(0,1), indexList);
 		}
 	}
 
