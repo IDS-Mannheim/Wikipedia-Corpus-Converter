@@ -39,11 +39,12 @@ public class XCESWriter {
 	XMLEventFactory eventFactory;
 	XMLEvent newline,tab;
 	XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-	String dtdfile, encoding;
+	String dtdfile = "http://corpora.ids-mannheim.de/I5/DTD/i5.dtd"; 
+	String encoding;
 	
 	BufferedOutputStream bos;
 	
-	public XCESWriter(File outputFile,String dtdfile,String encoding) throws Exception {
+	public XCESWriter(File outputFile,String encoding) throws Exception {
 		this.encoding = encoding;	
 		
 		XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
@@ -52,8 +53,6 @@ public class XCESWriter {
 		eventFactory = XMLEventFactory.newInstance();
 		newline = eventFactory.createCharacters("\n");
 		tab = eventFactory.createCharacters("   ");		
-				
-		this.dtdfile=dtdfile;
 	}
 	
 	protected void readIdsText(File inputFile) throws IOException, XMLStreamException {
@@ -87,7 +86,7 @@ public class XCESWriter {
 
 	}
 	
-	void write(String xmlFolder,String type,String dumpFilename,WikiXCESProcessor wikiXCESProcessor) throws Exception {			 
+	public void open(String xmlFolder,String type,String dumpFilename) throws Exception {			 
 		
 		eventWriter.add(eventFactory.createStartDocument(this.encoding));
 		eventWriter.add(newline);
@@ -101,24 +100,9 @@ public class XCESWriter {
 		eventWriter.add(eventFactory.createAttribute("version", "1.0"));
 		eventWriter.add(eventFactory.createAttribute("TEIform", "teiCorpus.2"));
 		eventWriter.add(newline);
-				
-		createCorpusHeader(wikiXCESProcessor.korpusSigle,wikiXCESProcessor.corpusTitle, 
-				wikiXCESProcessor.lang, dumpFilename, wikiXCESProcessor.textType);
+	}
 		
-		String idList;
-		if (type.equals("articles")){
-			idList = xmlFolder+"/articleList.xml";
-		} else{ idList = xmlFolder+"/discussionList.xml"; }
-		
-		
-		//create documents and texts
-		try {
-			wikiXCESProcessor.run(idList, type, this);
-			
-		} catch (XPathExpressionException | SAXException e) {
-			e.printStackTrace();
-		}
-		
+	public void close() throws Exception{		
 		eventWriter.add(eventFactory.createEndElement("","idsCorpus",""));
 		eventWriter.add(eventFactory.createEndDocument());
 		eventWriter.close();
@@ -270,7 +254,7 @@ public class XCESWriter {
 		eventWriter.add(newline);
 	}
 	
-	private void createCorpusHeader(String korpusSigle, String korpusTitel, String lang, 
+	public void createCorpusHeader(String korpusSigle, String korpusTitel, String lang, 
 			String dumpFilename, String textType) throws XMLStreamException {		
 		int level=1;		
 		createIndent(level);

@@ -11,9 +11,8 @@ import java.io.File;
  *     example: dewiki-20130728-pages-meta-current.xml
  *  4. the output file,   
  *  5. the path to the XML file containing the list of inflectives.
- *  6. the relative path to the DTD file from the location of the XSLT stylesheets 
- * 	7. the encoding of the output file, for example UTF-8 or ISO-8859-1
- * 
+ *  6. the encoding of the output file, for example UTF-8 or ISO-8859-1
+ *  
  * @author margaretha 
  */
 
@@ -25,9 +24,8 @@ public class WikiXCESConverter {
 		String type=args[1];
 		String dumpFilename=args[2];
 		String outputFile=args[3];
-		String inflectives=args[4];		
-		String dtdfile=args[5];
-		String encoding=args[6];
+		String inflectives=args[4];
+		String encoding=args[5];
 		
 		/*String dumpFilename="dewiki-20130728-pages-meta-current.xml";
 		String outputFile="output.xces";
@@ -37,6 +35,8 @@ public class WikiXCESConverter {
 		String dtdfile="dtd/i5.dtd";
 		String encoding="ISO-8859-1";
 		*/
+		
+		String pageList = type.equals("articles") ? "articleList.xml" : "discussionList.xml";
 		
 		File output = new File(outputFile);
 		File xsl = new File ("xslt/Templates.xsl");
@@ -49,8 +49,14 @@ public class WikiXCESConverter {
 				type,dumpFilename,inflectives,encoding);
 		
 		long startTime=System.nanoTime();
-		XCESWriter w = new XCESWriter(output,dtdfile,encoding);		
-		w.write(xmlFolder,type,dumpFilename,wikiXCESProcessor);		
+		XCESWriter w = new XCESWriter(output,encoding);
+		w.open(xmlFolder,type,dumpFilename);
+		w.createCorpusHeader(wikiXCESProcessor.korpusSigle,wikiXCESProcessor.corpusTitle, 
+				wikiXCESProcessor.lang, dumpFilename, wikiXCESProcessor.textType);
+		
+		// Do the converting and write
+		wikiXCESProcessor.run(pageList, type, w);
+		w.close();
 		long endTime=System.nanoTime();					
 		System.out.println("Transformation time "+ (endTime-startTime));		
 	}
