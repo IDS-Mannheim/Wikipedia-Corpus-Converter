@@ -10,7 +10,7 @@ import java.io.File;
  * 
  * @author margaretha
  * */
-public class WikiXCESConverterExample {
+public class WikiI5ConverterExample {
 
 	public static void main(String[] args) throws Exception {
 		
