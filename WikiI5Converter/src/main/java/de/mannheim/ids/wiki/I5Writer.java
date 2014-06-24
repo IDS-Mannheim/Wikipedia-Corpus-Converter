@@ -34,7 +34,7 @@ import org.xml.sax.SAXException;
  *
  */
 
-public class XCESWriter {
+public class I5Writer {
 	XMLEventWriter eventWriter;	
 	XMLEventFactory eventFactory;
 	XMLEvent newline,tab;
@@ -44,7 +44,7 @@ public class XCESWriter {
 	
 	BufferedOutputStream bos;
 	
-	public XCESWriter(File outputFile,String encoding) throws Exception {
+	public I5Writer(File outputFile,String encoding) throws Exception {
 		this.encoding = encoding;	
 		
 		XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();

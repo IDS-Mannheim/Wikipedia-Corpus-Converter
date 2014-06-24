@@ -16,7 +16,7 @@ import java.io.File;
  * @author margaretha 
  */
 
-public class WikiXCESConverter {		
+public class WikiI5Converter {		
 		
 	public static void main(String[] args) throws Exception {
 		
@@ -45,11 +45,11 @@ public class WikiXCESConverter {
 		System.setProperty("totalEntitySizeLimit", "0");
 		System.setProperty("PARAMETER_ENTITY_SIZE_LIMIT", "0");
 		
-		WikiXCESProcessor wikiXCESProcessor = new WikiXCESProcessor(xmlFolder,xsl,
+		WikiI5Processor wikiXCESProcessor = new WikiI5Processor(xmlFolder,xsl,
 				type,dumpFilename,inflectives,encoding);
 		
 		long startTime=System.nanoTime();
-		XCESWriter w = new XCESWriter(output,encoding);
+		I5Writer w = new I5Writer(output,encoding);
 		w.open(xmlFolder,type,dumpFilename);
 		w.createCorpusHeader(wikiXCESProcessor.korpusSigle,wikiXCESProcessor.corpusTitle, 
 				wikiXCESProcessor.lang, dumpFilename, wikiXCESProcessor.textType);

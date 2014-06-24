@@ -17,14 +17,14 @@ import org.xml.sax.SAXParseException;
  *
  */
 
-public class XCESErrorHandler implements ErrorHandler{
+public class I5ErrorHandler implements ErrorHandler{
 	
 	private boolean isValid;
 	private String errorMessage;
 	OutputStreamWriter errorWriter;
 	int numOfInvalidText=0;
 	
-	public XCESErrorHandler(String type,String wikifile) throws IOException {		
+	public I5ErrorHandler(String type,String wikifile) throws IOException {		
 		File errorFile = new File("logs/xces-"+wikifile+"-"+type+"-error.txt");
 		errorFile.createNewFile();		
 		errorWriter = new OutputStreamWriter(new FileOutputStream(errorFile));

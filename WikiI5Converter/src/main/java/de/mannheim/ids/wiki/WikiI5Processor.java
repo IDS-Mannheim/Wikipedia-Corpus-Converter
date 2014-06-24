@@ -39,9 +39,9 @@ import org.xml.sax.XMLReader;
  *
  */
 
-public class WikiXCESProcessor {
+public class WikiI5Processor {
 	
-	private XCESErrorHandler errorHandler;	
+	private I5ErrorHandler errorHandler;	
 	
 	private String[] indexList = {"A","B","C","D","E","F","G","H","I","J","K","L",
 		    "M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z",
@@ -60,7 +60,7 @@ public class WikiXCESProcessor {
 	public String lang,korpusSigle,corpusTitle,textType,xmlFolder;
 	private XMLReader reader;
 	
-	public WikiXCESProcessor(String xmlFolder, File xsl,String type, String dumpFilename, 
+	public WikiI5Processor(String xmlFolder, File xsl,String type, String dumpFilename, 
 			String inflectives,String encoding) throws Exception {
 		
 		this.xmlFolder=xmlFolder;		
@@ -96,7 +96,7 @@ public class WikiXCESProcessor {
 
 		// Setup temporary xces file
 		xces = new File(lang+"wiki-"+type+"-temp.xces");
-		errorHandler = new XCESErrorHandler(type,origfilename);
+		errorHandler = new I5ErrorHandler(type,origfilename);
 		// Setup documentbuilder for reading xml
 		DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
 		builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, false);
@@ -113,7 +113,7 @@ public class WikiXCESProcessor {
 		reader.setErrorHandler(errorHandler);
 	}	
 	
-	public void run(String path, String type, XCESWriter xcesWriter) throws 
+	public void run(String path, String type, I5Writer xcesWriter) throws 
 		SAXException, IOException, XPathExpressionException, XMLStreamException {
 				
 		Document articleList = xmlBuilder.parse(path);				
