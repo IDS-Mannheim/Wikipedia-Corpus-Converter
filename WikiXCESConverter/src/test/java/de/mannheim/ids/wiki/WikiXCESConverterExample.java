@@ -42,13 +42,13 @@ public class WikiXCESConverterExample {
 		//Process p = Runtime.getRuntime().exec("./ListGenerator.sh articles "+xmlFolder);
 		
 		// Initialize the processor
-		WikiXCESProcessor wikiXCESProcessor = new WikiXCESProcessor(xmlFolder,xsl,
+		WikiI5Processor wikiXCESProcessor = new WikiI5Processor(xmlFolder,xsl,
 				type,dumpFilename,inflectives,encoding);
 		
 		long startTime=System.nanoTime();
 		
 		//Initialize the XCES writer 
-		XCESWriter w = new XCESWriter(output,encoding);		
+		I5Writer w = new I5Writer(output,encoding);		
 				
 		w.open(xmlFolder,type,dumpFilename);
 		w.createCorpusHeader(wikiXCESProcessor.korpusSigle,wikiXCESProcessor.corpusTitle, 

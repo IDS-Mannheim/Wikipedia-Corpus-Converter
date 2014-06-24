@@ -23,7 +23,7 @@
 	  <configuration>
 	    <archive>
 	      <manifest>
-	        <mainClass>de.mannheim.ids.wiki.WikiXCESConverter</mainClass>
+	        <mainClass>de.mannheim.ids.wiki.WikiI5Converter</mainClass>
 	      </manifest>
 	    </archive>	    
 	    <descriptorRefs>
@@ -46,7 +46,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>de.mannheim.ids.wiki.WikiXCESConverter</mainClass>
+              <mainClass>de.mannheim.ids.wiki.WikiI5Converter</mainClass>
               <classpathPrefix>lib/</classpathPrefix>
               <addClasspath>true</addClasspath>
             </manifest>
