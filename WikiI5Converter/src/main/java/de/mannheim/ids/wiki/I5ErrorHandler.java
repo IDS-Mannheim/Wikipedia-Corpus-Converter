@@ -24,10 +24,14 @@ public class I5ErrorHandler implements ErrorHandler{
 	OutputStreamWriter errorWriter;
 	int numOfInvalidText=0;
 	
-	public I5ErrorHandler(String type,String wikifile) throws IOException {		
-		File errorFile = new File("logs/xces-"+wikifile+"-"+type+"-error.txt");
-		errorFile.createNewFile();		
-		errorWriter = new OutputStreamWriter(new FileOutputStream(errorFile));
+	public I5ErrorHandler(String wikifile) throws I5Exception {
+		File errorFile = new File("logs/i5-"+wikifile+"-error.txt");
+		try {
+			errorFile.createNewFile();
+			errorWriter = new OutputStreamWriter(new FileOutputStream(errorFile));
+		} catch (IOException e) {		
+			throw new I5Exception("Failed creating the error file.",e);
+		}
 	}
 	
 	@Override
@@ -39,7 +43,7 @@ public class I5ErrorHandler implements ErrorHandler{
 	public void error(SAXParseException exception) throws SAXException {
 		setErrorMessage(exception.getMessage()+"\n");			
 		setValid(false);
-		System.out.println("Invalid XCES");
+		System.err.println("Invalid I5");
 		exception.printStackTrace();
 	}
 
@@ -47,17 +51,21 @@ public class I5ErrorHandler implements ErrorHandler{
 	public void fatalError(SAXParseException exception) throws SAXException {				
 		setErrorMessage(exception.getMessage()+"\n");
 		setValid(false);
-		System.out.println("Invalid XCES: Fatal Error");
+		System.err.println("Invalid I5: Fatal Error");
 		exception.printStackTrace();
 	}
 
-	public void write(String xmlPath) throws IOException {
-		numOfInvalidText++;
-		errorWriter.append(numOfInvalidText+" ");
-		errorWriter.append(xmlPath);
-		errorWriter.append("\n");
-		errorWriter.append(getErrorMessage());
-		errorWriter.append("\n\n");
+	public void write(String xmlPath) throws I5Exception{
+		numOfInvalidText++;		
+		try {
+			errorWriter.append(numOfInvalidText+" ");		
+			errorWriter.append(xmlPath);
+			errorWriter.append("\n");
+			errorWriter.append(getErrorMessage());
+			errorWriter.append("\n\n");
+		} catch (IOException e) {
+			throw new I5Exception("Error writing I5.",e);
+		}
 	}
 	
 	public boolean isValid() {
@@ -73,11 +81,15 @@ public class I5ErrorHandler implements ErrorHandler{
 		setErrorMessage("");
 	}
 	
-	void close() throws IOException {
+	void close() throws I5Exception {
 		System.out.println("Number Of Invalid Text: "+numOfInvalidText);
-		errorWriter.append("Number Of Invalid Text: "+numOfInvalidText);		
-		errorWriter.close();
-		
+		try{
+			errorWriter.append("Number Of Invalid Text: "+numOfInvalidText);		
+			errorWriter.close();
+		}
+		catch (IOException e) {
+			throw new I5Exception(e);
+		}		
 	}
 
 	public String getErrorMessage() {

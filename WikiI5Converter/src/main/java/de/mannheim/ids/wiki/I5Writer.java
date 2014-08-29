@@ -24,32 +24,50 @@ import javax.xml.stream.events.Characters;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-import javax.xml.xpath.XPathExpressionException;
 
-import org.xml.sax.SAXException;
-
-/** This class defines how to write an IDS-XCES corpus for Wikipedia.
+/** This class defines how to write an IDS-I5 corpus for Wikipedia.
  * 
  * @author margaretha
  *
  */
 
 public class I5Writer {
-	XMLEventWriter eventWriter;	
-	XMLEventFactory eventFactory;
-	XMLEvent newline,tab;
-	XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-	String dtdfile = "http://corpora.ids-mannheim.de/I5/DTD/i5.dtd"; 
-	String encoding;
+	private XMLEventWriter eventWriter;	
+	private XMLEventFactory eventFactory;
+	private XMLEvent newline,tab;
+	private XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+	private final String dtdfile = "http://corpora.ids-mannheim.de/I5/DTD/i5.dtd"; 
+	private I5Corpus corpus;
 	
 	BufferedOutputStream bos;
 	
-	public I5Writer(File outputFile,String encoding) throws Exception {
-		this.encoding = encoding;	
+	public I5Writer(I5Corpus corpus,String outputFile) throws  I5Exception {
 		
-		XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
-		bos = new BufferedOutputStream(new FileOutputStream(outputFile),1024*1024);
-		eventWriter = outputFactory.createXMLEventWriter(bos,encoding);		
+		if (corpus == null){
+			throw new IllegalArgumentException("I5Corpus cannot be null or empty.");
+		}
+		if (outputFile == null || outputFile.isEmpty()){
+			throw new IllegalArgumentException("Output file cannot be null or empty.");
+		}	
+		
+		this.corpus = corpus;
+		
+		XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();	
+		File f = new File(outputFile);
+		if (f.getParentFile() != null) f.getParentFile().mkdirs();
+		try {
+			f.createNewFile();		
+			bos = new BufferedOutputStream(new FileOutputStream(f),
+					1024*1024);
+		} catch (IOException e) {
+			throw new I5Exception(e);
+		}		
+		try {
+			eventWriter = outputFactory.createXMLEventWriter(bos,corpus.getEncoding());
+		} catch (XMLStreamException e) {
+			throw new I5Exception("Failed creating XMLEventWriter.",e);
+		}
+		
 		eventFactory = XMLEventFactory.newInstance();
 		newline = eventFactory.createCharacters("\n");
 		tab = eventFactory.createCharacters("   ");		
@@ -86,27 +104,36 @@ public class I5Writer {
 
 	}
 	
-	public void open(String xmlFolder,String type,String dumpFilename) throws Exception {			 
-		
-		eventWriter.add(eventFactory.createStartDocument(this.encoding));
-		eventWriter.add(newline);
-		
-		String dtd = "<!DOCTYPE idsCorpus PUBLIC \"-//IDS//DTD IDS-XCES 1.0//EN\" \""+this.dtdfile+"\">";
-		
-		eventWriter.add(eventFactory.createDTD(dtd));
-		eventWriter.add(newline);		
-		
-		eventWriter.add(eventFactory.createStartElement("","","idsCorpus"));
-		eventWriter.add(eventFactory.createAttribute("version", "1.0"));
-		eventWriter.add(eventFactory.createAttribute("TEIform", "teiCorpus.2"));
-		eventWriter.add(newline);
+	public void open() throws I5Exception {			 
+		try{
+			eventWriter.add(eventFactory.createStartDocument(corpus.getEncoding()));
+			eventWriter.add(newline);
+			
+			String dtd = "<!DOCTYPE idsCorpus PUBLIC \"-//IDS//DTD IDS-I5 1.0//EN\" \""+this.dtdfile+"\">";
+			
+			eventWriter.add(eventFactory.createDTD(dtd));
+			eventWriter.add(newline);		
+			
+			eventWriter.add(eventFactory.createStartElement("","","idsCorpus"));
+			eventWriter.add(eventFactory.createAttribute("version", "1.0"));
+			eventWriter.add(eventFactory.createAttribute("TEIform", "teiCorpus.2"));
+			eventWriter.add(newline);
+		}
+		catch (XMLStreamException e) {
+			throw new I5Exception(e);
+		}
 	}
 		
-	public void close() throws Exception{		
-		eventWriter.add(eventFactory.createEndElement("","idsCorpus",""));
-		eventWriter.add(eventFactory.createEndDocument());
-		eventWriter.close();
-		bos.close();
+	public void close() throws I5Exception {
+		try{
+			eventWriter.add(eventFactory.createEndElement("","idsCorpus",""));
+			eventWriter.add(eventFactory.createEndDocument());
+			eventWriter.close();
+			bos.close();
+		}
+		catch (XMLStreamException | IOException e) {
+			throw new I5Exception(e);
+		}
 	}	
 	
 	private void createLeafNode(int level,String elementName, Iterator<Attribute> attributes,
@@ -124,69 +151,84 @@ public class I5Writer {
 		eventWriter.add(newline);
 	}
 	
-	void createIndent(int indent) throws XMLStreamException {
+	private void createIndent(int indent) throws XMLStreamException {
 		for (int i=0; i<indent;i++){
 			eventWriter.add(tab);
 		}
 	}
 	
-	void createIdsDocStartElement(String docId) throws XMLStreamException {
-		createIndent(1);
-		eventWriter.add(eventFactory.createStartElement("", "", "idsDoc"));
-		eventWriter.add(eventFactory.createAttribute("type", "text"));
-		eventWriter.add(eventFactory.createAttribute("version", "1.0"));
-		eventWriter.add(eventFactory.createAttribute("TEIform", "TEI.2"));
-		eventWriter.add(eventFactory.createAttribute("id", docId));
-		eventWriter.add(newline);
+	public void createIdsDocStartElement(String docId) throws I5Exception {
+		try{
+			createIndent(1);
+			eventWriter.add(eventFactory.createStartElement("", "", "idsDoc"));
+			eventWriter.add(eventFactory.createAttribute("type", "text"));
+			eventWriter.add(eventFactory.createAttribute("version", "1.0"));
+			eventWriter.add(eventFactory.createAttribute("TEIform", "TEI.2"));
+			eventWriter.add(eventFactory.createAttribute("id", docId));
+			eventWriter.add(newline);
+		}
+		catch (XMLStreamException e) {
+			throw new I5Exception("Error creating idsDoc start element.",e);
+		}
 	}
 	
-	void createIdsDocEndElement() throws XMLStreamException {	
-		createIndent(1);
-		eventWriter.add(eventFactory.createEndElement("","","idsDoc"));
-		eventWriter.add(newline);	
+	public void createIdsDocEndElement() throws I5Exception {
+		try{
+			createIndent(1);
+			eventWriter.add(eventFactory.createEndElement("","","idsDoc"));
+			eventWriter.add(newline);
+		}
+		catch (XMLStreamException e) {
+			throw new I5Exception("Error creating idsDoc end element.",e);
+		}
 	}
 	
-	void createIdsDocHeader(String docSigle, String docTitle) throws XMLStreamException {
-		int level=2;		
-		createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","idsHeader"));
-		eventWriter.add(eventFactory.createAttribute("type", "document"));
-		eventWriter.add(eventFactory.createAttribute("pattern", "text"));
-		eventWriter.add(eventFactory.createAttribute("status", "new"));
-		eventWriter.add(eventFactory.createAttribute("version", "1.0"));
-		eventWriter.add(eventFactory.createAttribute("TEIform", "teiHeader"));
-		eventWriter.add(newline);
-		
-		level++; createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","fileDesc"));
-		eventWriter.add(newline);
-		
-		level++; createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","titleStmt"));
-		eventWriter.add(newline);
-		level++;
-		createLeafNode(level,"dokumentSigle", null, docSigle);
-		createLeafNode(level,"d.title", null, docTitle);
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","titleStmt",""));
-		eventWriter.add(newline);
-		
-		createStaticIdsHeader(level);
-		
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","fileDesc"));
-		eventWriter.add(newline);
-		
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","idsHeader"));
-		eventWriter.add(newline);
+	public void createIdsDocHeader(String docSigle, String docTitle) throws I5Exception {
+		try{
+			int level=2;		
+			createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","idsHeader"));
+			eventWriter.add(eventFactory.createAttribute("type", "document"));
+			eventWriter.add(eventFactory.createAttribute("pattern", "text"));
+			eventWriter.add(eventFactory.createAttribute("status", "new"));
+			eventWriter.add(eventFactory.createAttribute("version", "1.0"));
+			eventWriter.add(eventFactory.createAttribute("TEIform", "teiHeader"));
+			eventWriter.add(newline);
+			
+			level++; createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","fileDesc"));
+			eventWriter.add(newline);
+			
+			level++; createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","titleStmt"));
+			eventWriter.add(newline);
+			level++;
+			createLeafNode(level,"dokumentSigle", null, docSigle);
+			createLeafNode(level,"d.title", null, docTitle);
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","titleStmt",""));
+			eventWriter.add(newline);
+			
+			createStaticIdsHeader(level);
+			
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","fileDesc"));
+			eventWriter.add(newline);
+			
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","idsHeader"));
+			eventWriter.add(newline);
+		}
+		catch (XMLStreamException e) {
+			throw new I5Exception("Error creating an idsHeader of an idsDoc.",e);
+		}
 	}
 	
-	String createIdsDocTitle(String type,String index,int docNr){
+	public String createIdsDocTitle(String type,String index,int docNr){
 		if (type.equals("articles")){			
 			try {
 				Integer.parseInt(index);
-				return "Wikipedia, Anfangszahl "+index;
+				return "Wikipedia, Anfangszahl "+index+" Teil "+String.format("%02d",docNr);
 			} catch (Exception e) {
 				return "Wikipedia, Anfangsbuchstabe "+index+" Teil "+String.format("%02d",docNr); 
 			}
@@ -212,8 +254,8 @@ public class I5Writer {
 				
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		attributes.add(eventFactory.createAttribute("region", "world"));
-		attributes.add(eventFactory.createAttribute("status", "restricted"));
-		createLeafNode(level,"availability", attributes.iterator(), "");
+		//attributes.add(eventFactory.createAttribute("status", "restricted"));
+		createLeafNode(level,"availability", attributes.iterator(), "CC-BY-SA");
 		attributes.clear();
 				
 		createLeafNode(level,"pubDate", null, "");
@@ -254,187 +296,213 @@ public class I5Writer {
 		eventWriter.add(newline);
 	}
 	
-	public void createCorpusHeader(String korpusSigle, String korpusTitel, String lang, 
-			String dumpFilename, String textType) throws XMLStreamException {		
-		int level=1;		
-		createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","idsHeader"));
-		eventWriter.add(eventFactory.createAttribute("type", "corpus"));
-		eventWriter.add(eventFactory.createAttribute("pattern", "allesaußerZtg/Zschr"));
-		eventWriter.add(eventFactory.createAttribute("status", "new"));
-		eventWriter.add(eventFactory.createAttribute("version", "1.0"));
-		eventWriter.add(eventFactory.createAttribute("TEIform", "teiHeader"));
-		eventWriter.add(newline);
+	public void createCorpusHeader() throws I5Exception {
+		String korpusSigle = corpus.getKorpusSigle();
+		String korpusTitel = corpus.getCorpusTitle();
+		String lang = corpus.getLang();
+		String textType = corpus.getTextType();
+		String dumpFilename = corpus.getDumpFilename();
 		
-		level++; createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","fileDesc"));
-		eventWriter.add(newline);
-		
-		level++; createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","titleStmt"));
-		eventWriter.add(newline);
-		level++;
-		createLeafNode(level,"korpusSigle", null, korpusSigle);		
-		createLeafNode(level,"c.title", null, korpusTitel);
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","titleStmt",""));
-		eventWriter.add(newline);
-				
-		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
-		attributes.add(eventFactory.createAttribute("version", "1.0"));
-		createLeafNode(level,"editionStmt", attributes.iterator(), null);
-		attributes.clear();
-		
-		createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","publicationStmt"));
-		eventWriter.add(newline);
-		
-		level++;
-		createLeafNode(level, "distributor", null, "Institut für Deutsche Sprache");		
-		createLeafNode(level,"pubAddress", null, "Postfach 10 16 21, D-68016 Mannheim");			
-		createLeafNode(level,"telephone", null, "+49 (0)621 1581 0");
-		
-		attributes.add(eventFactory.createAttribute("type", "www"));
-		createLeafNode(level,"eAddress", attributes.iterator(), "http://www.ids-mannheim.de");
-		createLeafNode(level,"eAddress", attributes.iterator(), "http://www.ids-mannheim.de/kl/projekte/korpora/");		
-		attributes.clear();
-		
-		attributes.add(eventFactory.createAttribute("type", "email"));
-		createLeafNode(level,"eAddress", attributes.iterator(), "dereko@ids-mannheim.de");
-		attributes.clear();
-		
-		attributes.add(eventFactory.createAttribute("status", "restricted"));
-		createLeafNode(level,"availability", attributes.iterator(), "This document, the IDS-Wikipedia."+lang+
-				"-Corpus, is part of the Archive of General Reference Corpora at the IDS. It is " +
-				"published under the Creative Commons Attribution-ShareAlike License. See " +
-				"http://creativecommons.org/licenses/by-sa/3.0/legalcode for details. See " +
-				"http://www.ids-mannheim.de/kl/projekte/korpora/releases.html on how to refer to " +
-				"this document.");
-		attributes.clear();
-				
-		attributes.add(eventFactory.createAttribute("type", "year"));
-		createLeafNode(level,"pubDate", attributes.iterator(), String.valueOf(Calendar.getInstance().get(Calendar.YEAR)));
-		attributes.clear();
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","publicationStmt",""));
-		eventWriter.add(newline);
-		
-		createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","sourceDesc"));
-		eventWriter.add(eventFactory.createAttribute("Default", "n"));		
-		eventWriter.add(newline);
-		
-		level++; createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","biblStruct"));
-		eventWriter.add(eventFactory.createAttribute("Default", "n"));
-		eventWriter.add(newline);
-		
-		level++; createIndent(level);		
-		eventWriter.add(eventFactory.createStartElement("","","monogr"));
-		eventWriter.add(newline);
-
-		level++;
-		attributes.add(eventFactory.createAttribute("type", "main"));
-		createLeafNode(level,"h.title", attributes.iterator(), "Wikipedia");
-		attributes.clear();
-				
-		createLeafNode(level,"h.author", null, "");
-		createLeafNode(level,"editor", null, "wikipedia.org");
-		
-		createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","edition"));				
-		eventWriter.add(newline);
-		level++;
-		createLeafNode(level,"further", null, "Dump file &#34;"+dumpFilename+"&#34; retrieved from http://dumps.wikimedia.org");
-		createLeafNode(level,"kind", null, "");
-		createLeafNode(level,"appearance", null, "");
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","edition"));
-		eventWriter.add(newline);
-		
-		createIndent(level);	
-		eventWriter.add(eventFactory.createStartElement("","","imprint"));				
-		eventWriter.add(newline);
-		level++;
-		createLeafNode(level,"publisher", null, "Wikipedia");
-		//createLeafNode(level,"pubPlace", null, "URL:http://"+lang+".wikipedia.org");
-		level--; createIndent(level);	
-		eventWriter.add(eventFactory.createEndElement("","","imprint"));
-		eventWriter.add(newline);
-		
-		level--; createIndent(level);		
-		eventWriter.add(eventFactory.createEndElement("","","monogr"));
-		eventWriter.add(newline);
-		
-		level--; createIndent(level);		
-		eventWriter.add(eventFactory.createEndElement("","","biblStruct"));
-		eventWriter.add(newline);
+		try{
+			int level=1;		
+			createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","idsHeader"));
+			eventWriter.add(eventFactory.createAttribute("type", "corpus"));
+			eventWriter.add(eventFactory.createAttribute("pattern", "allesaußerZtg/Zschr"));
+			eventWriter.add(eventFactory.createAttribute("status", "new"));
+			eventWriter.add(eventFactory.createAttribute("version", "1.0"));
+			eventWriter.add(eventFactory.createAttribute("TEIform", "teiHeader"));
+			eventWriter.add(newline);
 			
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","sourceDesc"));
-		eventWriter.add(newline);
+			level++; createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","fileDesc"));
+			eventWriter.add(newline);
+			
+			level++; createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","titleStmt"));
+			eventWriter.add(newline);
+			level++;
+			createLeafNode(level,"korpusSigle", null, korpusSigle);		
+			createLeafNode(level,"c.title", null, korpusTitel);
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","titleStmt",""));
+			eventWriter.add(newline);
+					
+			ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+			attributes.add(eventFactory.createAttribute("version", "1.0"));
+			createLeafNode(level,"editionStmt", attributes.iterator(), null);
+			attributes.clear();
+			
+			createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","publicationStmt"));
+			eventWriter.add(newline);
+			
+			level++;
+			createLeafNode(level, "distributor", null, "Institut für Deutsche Sprache");		
+			createLeafNode(level,"pubAddress", null, "Postfach 10 16 21, D-68016 Mannheim");			
+			createLeafNode(level,"telephone", null, "+49 (0)621 1581 0");
+			
+			attributes.add(eventFactory.createAttribute("type", "www"));
+			createLeafNode(level,"eAddress", attributes.iterator(), 
+					"http://www.ids-mannheim.de");
+			createLeafNode(level,"eAddress", attributes.iterator(), 
+					"http://www.ids-mannheim.de/kl/projekte/korpora/");		
+			attributes.clear();
+			
+			attributes.add(eventFactory.createAttribute("type", "email"));
+			createLeafNode(level,"eAddress", attributes.iterator(), "dereko@ids-mannheim.de");
+			attributes.clear();
+			
+			attributes.add(eventFactory.createAttribute("status", "restricted"));
+			createLeafNode(level,"availability", attributes.iterator(), "This document, " +
+					"the IDS-Wikipedia."+lang+"-Corpus, is part of the Archive of General " +
+					"Reference Corpora at the IDS. It is published under the Creative Commons " +
+					"Attribution-ShareAlike License. See http://creativecommons.org/licenses/" +
+					"by-sa/3.0/legalcode for details. See http://www.ids-mannheim.de/kl/projekte/" +
+					"korpora/releases.html on how to refer to this document.");
+			attributes.clear();
+					
+			attributes.add(eventFactory.createAttribute("type", "year"));
+			createLeafNode(level,"pubDate", attributes.iterator(), String.valueOf(
+					Calendar.getInstance().get(Calendar.YEAR)));
+			attributes.clear();
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","publicationStmt",""));
+			eventWriter.add(newline);
+			
+			createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","sourceDesc"));
+			eventWriter.add(eventFactory.createAttribute("Default", "n"));		
+			eventWriter.add(newline);
+			
+			level++; createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","biblStruct"));
+			eventWriter.add(eventFactory.createAttribute("Default", "n"));
+			eventWriter.add(newline);
+			
+			level++; createIndent(level);		
+			eventWriter.add(eventFactory.createStartElement("","","monogr"));
+			eventWriter.add(newline);
+	
+			level++;
+			attributes.add(eventFactory.createAttribute("type", "main"));
+			createLeafNode(level,"h.title", attributes.iterator(), "Wikipedia");
+			attributes.clear();
+					
+			createLeafNode(level,"h.author", null, "");
+			createLeafNode(level,"editor", null, "wikipedia.org");
+			
+			createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","edition"));				
+			eventWriter.add(newline);
+			level++;
+			createLeafNode(level,"further", null, "Dump file &#34;"+dumpFilename+
+					"&#34; retrieved from http://dumps.wikimedia.org");
+			createLeafNode(level,"kind", null, "");
+			createLeafNode(level,"appearance", null, "");
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","edition"));
+			eventWriter.add(newline);
+			
+			createIndent(level);	
+			eventWriter.add(eventFactory.createStartElement("","","imprint"));				
+			eventWriter.add(newline);
+			level++;
+			createLeafNode(level,"publisher", null, "Wikipedia");
+			//createLeafNode(level,"pubPlace", null, "URL:http://"+lang+".wikipedia.org");
+			level--; createIndent(level);	
+			eventWriter.add(eventFactory.createEndElement("","","imprint"));
+			eventWriter.add(newline);
+			
+			level--; createIndent(level);		
+			eventWriter.add(eventFactory.createEndElement("","","monogr"));
+			eventWriter.add(newline);
+			
+			level--; createIndent(level);		
+			eventWriter.add(eventFactory.createEndElement("","","biblStruct"));
+			eventWriter.add(newline);
+				
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","sourceDesc"));
+			eventWriter.add(newline);
+			
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","fileDesc"));
+			eventWriter.add(newline);
+			
+			createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","encodingDesc"));				
+			eventWriter.add(newline);
+			
+			level++; createIndent(level);		
+			eventWriter.add(eventFactory.createStartElement("","","editorialDecl"));				
+			eventWriter.add(newline);
+			level++;
+			createLeafNode(level,"conformance", null, "This document conforms to I5 " +
+					"(see http://jtei.revues.org/508)");
+			createLeafNode(level,"transduction", null, "This document has been " +
+					"generated via a two-stage conversion by Eliza Margaretha. " +
+					"In the first stage, wikitext " +
+					"from a Wikidump is converted into WikiXML by a WikiXMLConverter" +
+					"and in the second stage, WikiXML is converted into I5 by " +
+					"a WikiI5Converter. The converters are available at " +
+					"http://corpora.ids-mannheim.de/pub/tools/. Reference: " +
+					"Margaretha and Lüngen. 2014. Building Linguistic " +
+					"Corpora from Wikipedia Articles and Discussions. Journal " +
+					"for Language Technology and Computational Linguistics. " +
+					"To appear.");
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","editorialDecl"));
+			eventWriter.add(newline);
+			
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","encodingDesc"));
+			eventWriter.add(newline);
+			
+			createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","profileDesc"));				
+			eventWriter.add(newline);
+			
+			level++; createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","langUsage"));				
+			eventWriter.add(newline);
+			
+			level++; createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","language"));				
+			eventWriter.add(eventFactory.createAttribute("id", lang));
+			eventWriter.add(eventFactory.createAttribute("usage", "100"));		
+			eventWriter.add(eventFactory.createCharacters(selectLanguage(lang)));
+			eventWriter.add(eventFactory.createEndElement("","","language"));
+			eventWriter.add(newline);
+			
+			level--; createIndent(level); 
+			eventWriter.add(eventFactory.createEndElement("","","langUsage"));
+			eventWriter.add(newline);	
+			
+			createIndent(level);
+			eventWriter.add(eventFactory.createStartElement("","","textDesc"));				
+			eventWriter.add(newline);
+			
+			level++;
+			createLeafNode(level, "textType", null, textType);
+			createLeafNode(level, "textTypeRef", null, "");
+			
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","textDesc"));
+			eventWriter.add(newline);
+			
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","profileDesc"));
+			eventWriter.add(newline);		
+			
+			level--; createIndent(level);
+			eventWriter.add(eventFactory.createEndElement("","","idsHeader"));
+			eventWriter.add(newline);
 		
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","fileDesc"));
-		eventWriter.add(newline);
-		
-		createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","encodingDesc"));				
-		eventWriter.add(newline);
-		
-		level++; createIndent(level);		
-		eventWriter.add(eventFactory.createStartElement("","","editorialDecl"));				
-		eventWriter.add(newline);
-		level++;
-		createLeafNode(level,"conformance", null, "This document conforms to I5 (see" +
-				" http://jtei.revues.org/508)");
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","editorialDecl"));
-		eventWriter.add(newline);
-		
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","encodingDesc"));
-		eventWriter.add(newline);
-		
-		createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","profileDesc"));				
-		eventWriter.add(newline);
-		
-		level++; createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","langUsage"));				
-		eventWriter.add(newline);
-		
-		level++; createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","language"));				
-		eventWriter.add(eventFactory.createAttribute("id", lang));
-		eventWriter.add(eventFactory.createAttribute("usage", "100"));		
-		eventWriter.add(eventFactory.createCharacters(selectLanguage(lang)));
-		eventWriter.add(eventFactory.createEndElement("","","language"));
-		eventWriter.add(newline);
-		
-		level--; createIndent(level); 
-		eventWriter.add(eventFactory.createEndElement("","","langUsage"));
-		eventWriter.add(newline);	
-		
-		createIndent(level);
-		eventWriter.add(eventFactory.createStartElement("","","textDesc"));				
-		eventWriter.add(newline);
-		
-		level++;
-		createLeafNode(level, "textType", null, textType);
-		createLeafNode(level, "textTypeRef", null, "");
-		
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","textDesc"));
-		eventWriter.add(newline);
-		
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","profileDesc"));
-		eventWriter.add(newline);		
-		
-		level--; createIndent(level);
-		eventWriter.add(eventFactory.createEndElement("","","idsHeader"));
-		eventWriter.add(newline);	
+		}
+		catch (XMLStreamException e) {
+			throw new I5Exception("Error creating an idsHeader of an idsCorpus.", e);
+		}
 	}
 	
 	private String selectLanguage(String lang) {		

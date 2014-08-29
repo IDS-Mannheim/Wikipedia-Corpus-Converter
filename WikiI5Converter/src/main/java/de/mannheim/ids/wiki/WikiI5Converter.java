@@ -1,68 +1,117 @@
 package de.mannheim.ids.wiki;
 
-import java.io.File;
+import javax.xml.xpath.XPathExpressionException;
+
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 /** This is the main class for converting the XML-ized Wikipages to XCES
- *  This class takes 6 arguments as inputs:
- *  1. the folder path of the XML-ized Wikipages,
- *  2. the type of the pages (articles or discussions), 
- *  3. the filename of the Wikipedia dump in format:
- *     [2 character language code]wiki-[year][month][date]-pages-meta-current.xml
- *     example: dewiki-20130728-pages-meta-current.xml
- *  4. the output file,
- *  5. the encoding of the output file, for example UTF-8 or ISO-8859-1
- *  6. the path to the XML file containing the list of inflectives.
- *  
- * @author margaretha 
+ * 	An argument configuration example: 
+ * 	-x xml-de/articles -t articles -w dewiki-20130728-sample.xml -o out.i5 
+ * 	-e utf-8 -inf inflectives.xml -i articleIndex.xml 
+ *   
+ * 	@author margaretha 
  */
 
-public class WikiI5Converter {		
+public class WikiI5Converter {	
+	
+	private Options options;
+	
+	public WikiI5Converter() {
+		options = new Options();
+		options.addOption("x", true, "WikiXML article/discussion folder");
+		options.addOption("t", true, "The type of Wikipages (articles or discussions)");
+		options.addOption("w", true, "Wiki dump file starting with: [2 character " +
+				"language code]wiki-[year][month][date], for example:" +
+				"dewiki-20130728-pages-meta-current.xml");
+		options.addOption("o", true, "Output file");
+		options.addOption("e", true, "Encoding: utf-8 or iso-8859-1");
+		options.addOption("inf", true, "Inflective file");
+		options.addOption("i", true, "An index of Wiki article/discussion pages");		
+	}
+	
+	public static void main(String[] args) throws Exception {		
+		WikiI5Converter converter = new WikiI5Converter();
+		converter.run(args);
+	}
+	
+	public void run(String[] args) throws I5Exception  {
 		
-	public static void main(String[] args) throws Exception {
+		CommandLineParser parser = new BasicParser();
+		CommandLine cmd;
+		try {
+			cmd = parser.parse(options, args);
+		} catch (ParseException e) {
+			throw new I5Exception(e);
+		}
+						
+		String xmlFolder = cmd.getOptionValue("x");
+		String type = cmd.getOptionValue("t");
+		String dumpFilename = cmd.getOptionValue("w");
+		String outputFile = cmd.getOptionValue("o");		
+		String encoding = cmd.getOptionValue("e");				
+		String inflectives = cmd.getOptionValue("inf");
+		String index = cmd.getOptionValue("i");
 		
-		String xmlFolder=args[0];
-		String type=args[1];
-		String dumpFilename=args[2];
-		String outputFile=args[3];		
-		String encoding=args[4];
-		String inflectives=args[5];
+		convert(xmlFolder, type, dumpFilename, inflectives, encoding, outputFile, index);
+						
+	}
+	
+	public static void convert(String xmlFolder, String type, String dumpFilename,
+			String inflectives, String encoding, String outputFile, String index) throws 
+			I5Exception  {	
 		
-		/*String dumpFilename="dewiki-20130728-pages-meta-current.xml";
-		String outputFile="output.xces";
-		String type="articles";
-		String xmlFolder ="xml-de/";
-		String inflectives="../inflectives.xml";
-		String dtdfile="dtd/i5.dtd";
-		String encoding="ISO-8859-1";
-		*/
+		if (xmlFolder == null){
+			throw new IllegalArgumentException("Please specify the WikiXML root folder.");
+		}
 		
-		String pageList = type.equals("articles") ? "articleList.xml" : "discussionList.xml";
+		if (type == null){
+			throw new IllegalArgumentException("Please specify a wiki dump file.");
+		}
+		if (!type.equals("articles") && !type.equals("discussions")){
+			throw new IllegalArgumentException("The type is not recognized. " +
+					"Please specify the type as: articles or dicussions");
+		}
 		
-		File output = new File(outputFile);
-		File xsl = new File ("xslt/Templates.xsl");
+		if (dumpFilename == null){
+			throw new IllegalArgumentException("Please specify the Wiki dump file.");
+		}
+		
+		if (outputFile == null){
+			throw new IllegalArgumentException("Please specify the output file.");
+		}
+		if (index == null){
+			throw new IllegalArgumentException("Please specify the index of the Wikipedia "
+					+type+".");
+		}
+		if (encoding == null){
+			encoding = "utf-8"; // default encoding
+		}
+		
 		
 		System.setProperty("entityExpansionLimit", "0");
 		System.setProperty("totalEntitySizeLimit", "0");
 		System.setProperty("PARAMETER_ENTITY_SIZE_LIMIT", "0");
-		
-		if (inflectives.equals("null")){
-			inflectives = null;
-		}		
-		
-		WikiI5Processor wikiXCESProcessor = new WikiI5Processor(xmlFolder,xsl,
-				type,dumpFilename,inflectives,encoding);
-		
+				
+		I5Corpus corpus = new I5Corpus(dumpFilename, type, encoding);		
+							
 		long startTime=System.nanoTime();
-		I5Writer w = new I5Writer(output,encoding);
-		w.open(xmlFolder,type,dumpFilename);
-		w.createCorpusHeader(wikiXCESProcessor.korpusSigle,wikiXCESProcessor.corpusTitle, 
-				wikiXCESProcessor.lang, dumpFilename, wikiXCESProcessor.textType);
-		
-		// Do the converting and write
-		wikiXCESProcessor.run(pageList, type, w);
-		w.close();
+		I5Writer w = new I5Writer(corpus,outputFile);
+		try{
+			w.open();
+			w.createCorpusHeader();			
+			// Do the converting and write
+			WikiI5Processor wikiI5Processor = new WikiI5Processor(corpus, inflectives);
+			wikiI5Processor.run(xmlFolder, index, w);
+			w.close();
+		}
+		catch (XPathExpressionException e) {
+			throw new I5Exception(e);
+		}
 		long endTime=System.nanoTime();					
-		System.out.println("Transformation time "+ (endTime-startTime));		
+		System.out.println("Transformation time "+ (endTime-startTime));
 	}
-
 }
