@@ -39,6 +39,20 @@ public class WikiTalkHandler {
 	private String userLabel, contributionLabel;
 	
 	public WikiTalkHandler(String language, String user, String contribution , WikiStatistics wikiStatistics) throws IOException {		
+		
+		if (language==null || language.isEmpty()){
+			throw new IllegalArgumentException("Language cannot be null or empty.");
+		}
+		if (user==null || user.isEmpty()){
+			throw new IllegalArgumentException("User cannot be null or empty.");
+		}
+		if (contribution==null || contribution.isEmpty()){
+			throw new IllegalArgumentException("Contribution cannot be null or empty.");
+		}
+		if (wikiStatistics == null){
+			throw new IllegalArgumentException("WikiStatistics cannot be null.");
+		}
+		
 		signaturePattern = Pattern.compile("(.*-{0,2})\\s*\\[\\[:?"+user+":([^\\|]+)\\|([^\\]]+)\\]\\](.*)");
 		specialContribution = Pattern.compile("(.*)\\[\\["+contribution+"/([^\\|]+)\\|[^\\]]+\\]\\](.*)");
 		
@@ -55,6 +69,10 @@ public class WikiTalkHandler {
 	
 	protected void handleDiscussion(WikiPage wikiPage, String strLine, String trimmedStrLine) 
 			throws IOException {
+		
+		if (wikiPage == null){
+			throw new IllegalArgumentException("WikiPage cannot be null.");
+		}
 		this.wikiPage = wikiPage;		
 		
 		if (trimmedStrLine.endsWith("</text>")){ // finish collecting text
@@ -92,6 +110,10 @@ public class WikiTalkHandler {
 		
 	private void segmentPosting(String text) throws IOException {		
 		
+		if (text == null){
+			throw new IllegalArgumentException("Text cannot be null.");
+		}
+		
 		String trimmedText = text.trim();		
 		sigFlag=false;
 		
@@ -108,41 +130,41 @@ public class WikiTalkHandler {
 		
 		if (!baselineMode){
 			
-		// Help signature
-		if (trimmedText.contains(this.contributionLabel)){
-			if (handleHelp(trimmedText)) return;			
-		}
-		
-		// Unsigned
-		if (trimmedText.contains("unsigned")){
-			if (handleUnsigned(trimmedText)) return;			
-		}
-				
-		// Level Marker
-		if (trimmedText.startsWith(":")){			
-			writePosting("unknown", "", "", trimmedText,"");
-			return;
-		}
-		
-		// Line Marker		
-		if (trimmedText.startsWith("---")){
-			if (!posting.trim().isEmpty()){
-				writePosting("unknown", "", "", posting.trim(),"");				
-				posting="";
+			// Help signature
+			if (trimmedText.contains(this.contributionLabel)){
+				if (handleHelp(trimmedText)) return;			
 			}
-			return;
-		}
-		
-		// Heading
-		if (trimmedText.contains("=")){
-			Matcher matcher = headingPattern.matcher(trimmedText);
-			if (headerHandler(trimmedText, matcher)) return;
-		}
-		
-		if (trimmedText.contains("&lt;h")){
-			Matcher matcher = headingPattern2.matcher(trimmedText);	
-			if (headerHandler(trimmedText, matcher)) return;
-		}
+			
+			// Unsigned
+			if (trimmedText.contains("unsigned")){
+				if (handleUnsigned(trimmedText)) return;			
+			}
+					
+			// Level Marker
+			if (trimmedText.startsWith(":")){			
+				writePosting("unknown", "", "", trimmedText,"");
+				return;
+			}
+			
+			// Line Marker		
+			if (trimmedText.startsWith("---")){
+				if (!posting.trim().isEmpty()){
+					writePosting("unknown", "", "", posting.trim(),"");				
+					posting="";
+				}
+				return;
+			}
+			
+			// Heading
+			if (trimmedText.contains("=")){
+				Matcher matcher = headingPattern.matcher(trimmedText);
+				if (headerHandler(matcher)) return;
+			}
+			
+			if (trimmedText.contains("&lt;h")){
+				Matcher matcher = headingPattern2.matcher(trimmedText);	
+				if (headerHandler(matcher)) return;
+			}
 		
 		}
 		
@@ -151,7 +173,11 @@ public class WikiTalkHandler {
 		
 	}
 	
-	private boolean handleSignature(String trimmedText) throws IOException{		 
+	private boolean handleSignature(String trimmedText) throws IOException{
+		if (trimmedText == null){
+			throw new IllegalArgumentException("Text cannot be null.");
+		}
+		
 		Matcher matcher = signaturePattern.matcher(trimmedText);
 		if (matcher.find()){		
 			String rest="", timestamp="";
@@ -162,6 +188,7 @@ public class WikiTalkHandler {
 			}
 			sigFlag=true;			
 			posting += matcher.group(1)+"\n";
+			
 			writePosting(matcher.group(3), matcher.group(2), timestamp, posting.trim(),rest.trim());
 						
 			matcher.reset();
@@ -172,6 +199,10 @@ public class WikiTalkHandler {
 	}
 	
 	private boolean handleHelp(String trimmedText) throws IOException{
+		if (trimmedText == null){
+			throw new IllegalArgumentException("Text cannot be null.");
+		}
+		
 		Matcher matcher = specialContribution.matcher(trimmedText);
 		if (matcher.find()){			
 			String timestamp="";
@@ -193,6 +224,10 @@ public class WikiTalkHandler {
 	}
 	
 	private boolean handleUnsigned(String trimmedText) throws IOException{
+		if (trimmedText == null){
+			throw new IllegalArgumentException("Text cannot be null.");
+		}
+		
 		Matcher matcher = unsignedPattern.matcher(trimmedText);
 		if (matcher.find()){	
 			String timestamp="";			
@@ -212,14 +247,19 @@ public class WikiTalkHandler {
 		return false;	
 	}
 		
-	private boolean headerHandler(String text, Matcher matcher) throws IOException{
+	private boolean headerHandler(Matcher matcher) throws IOException{		
+		
+		if (matcher == null){
+			throw new IllegalArgumentException("Matcher cannot be null.");
+		}		
+		
 		if (matcher.find()){
 			if (!posting.trim().isEmpty()){
 				writePosting("unknown", "", "", posting.trim(),"");
 				posting="";
 			}
 		
-			text = WikiPageHandler.cleanTextStart(matcher.group(1));
+			String text = WikiPageHandler.cleanTextStart(matcher.group(1));
 					
 			wikiPage.wikitext+=parseToXML(text.trim())+"\n";
 			matcher.reset();
@@ -230,6 +270,10 @@ public class WikiTalkHandler {
 	
 	private int identifyLevel(String posting){
 		
+		if (posting == null){
+			throw new IllegalArgumentException("Posting cannot be null.");
+		}
+		
 		Matcher matcher = levelPattern.matcher(posting);
 		if (matcher.find()){
 			return matcher.group(1).length();
@@ -238,6 +282,10 @@ public class WikiTalkHandler {
 	}
 	
 	private String parseToXML(String posting) {		
+		
+		if (posting == null){
+			throw new IllegalArgumentException("Posting cannot be null.");
+		}
 		
 		posting = StringEscapeUtils.unescapeXml(posting); // unescape XML tags 
 		posting = WikiPageHandler.cleanPattern(posting);		
@@ -252,7 +300,21 @@ public class WikiTalkHandler {
 		return posting;
 	}
 	
-	private void writePosting(String speaker, String speakerLabel, String timestamp, String posting,String postscript) throws IOException{
+	private void writePosting(String speaker, String speakerLabel, String timestamp, 
+			String posting, String postscript) throws IOException{
+		
+		if (posting == null){
+			throw new IllegalArgumentException("Posting cannot be null.");
+		}
+		if (speaker == null){
+			throw new IllegalArgumentException("Speaker cannot be null.");
+		}		
+		if (timestamp == null){
+			throw new IllegalArgumentException("Timestamp cannot be null.");
+		}
+		if (postscript == null){
+			throw new IllegalArgumentException("Postscript cannot be null.");
+		}
 		
 		if (posting.isEmpty()) return;		
 		else wikiStatistics.addTotalPostings();
@@ -272,6 +334,8 @@ public class WikiTalkHandler {
 		
 		if (!timestamp.isEmpty()){
 			sb.append(" synch=\""+time.getTimeId(timestamp)+"\"");
+			posting += " "+timestamp;
+			//System.out.println(posting+"\n");
 		}
 		sb.append(">\n");						
 				

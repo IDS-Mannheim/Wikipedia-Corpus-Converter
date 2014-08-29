@@ -18,6 +18,17 @@ public class MultipleXMLWriter implements WikiXMLWriter{
 	WikiStatistics wikiStatistics;
 	
 	public MultipleXMLWriter(String xmlOutputDir, String language, WikiStatistics wikiStatistics) {
+		
+		if (xmlOutputDir==null || xmlOutputDir.isEmpty()){
+			throw new IllegalArgumentException("Xml output directory cannot be null or empty.");
+		}
+		if (wikiStatistics==null){
+			throw new IllegalArgumentException("WikiStatistics cannot be null.");
+		}
+		if (language == null || language.isEmpty()){
+			throw new IllegalArgumentException("Language cannot be null or empty.");
+		}
+		
 		this.xmlOutputDir = xmlOutputDir;
 		this.counter=1;
 		this.wikiStatistics = wikiStatistics;
@@ -27,6 +38,10 @@ public class MultipleXMLWriter implements WikiXMLWriter{
 	@Override
 	public void write(WikiPage wikiPage, boolean isDiscussion, String indent)
 			throws IOException {	
+		
+		if (wikiPage==null){
+			throw new IllegalArgumentException("WikiPage cannot be null.");
+		}
 		
 		OutputStreamWriter writer;
 		String path;		

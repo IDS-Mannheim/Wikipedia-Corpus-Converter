@@ -35,6 +35,14 @@ public class WikiPageHandler {
 	private WikiStatistics wikiStatistics;
 
 	public WikiPageHandler(String language, WikiStatistics wikiStatistics) {
+		
+		if (language==null || language.isEmpty()){
+			throw new IllegalArgumentException("Language cannot be null or empty.");
+		}
+		if (wikiStatistics == null){
+			throw new IllegalArgumentException("WikiStatistics cannot be null.");
+		}
+		
 		tagSoupParser = new TagSoupParser();
 		swebleParser = new Sweble2Parser();
 		dp = new DOMParser();
@@ -45,6 +53,10 @@ public class WikiPageHandler {
 	
 	public void handlePageContent(WikiPage wikiPage, String strLine, String trimmedStrLine) 
 			throws IOException {
+		
+		if (wikiPage == null){
+			throw new IllegalArgumentException("WikiPage cannot be null.");
+		}
 		
 		// Finish collecting text
 		if (trimmedStrLine.endsWith("</text>")){ 
@@ -60,6 +72,7 @@ public class WikiPageHandler {
 			} 
 						
 			wikiPage.wikitext= parseToXML(wikiPage.wikitext, wikiPage.getPageTitle());
+			// To do: if wikitext is empty after parsing?
 			wikiPage.pageStructure += "      <text/>\n";
 			textFlag=false;
 		}
@@ -69,8 +82,10 @@ public class WikiPageHandler {
 			wikiPage.wikitext += strLine+"\n";
 		}		
 		
-		else if(trimmedStrLine.startsWith("<text")) {				
-			if (trimmedStrLine.endsWith("<text/>")){ // empty text				
+		else if(trimmedStrLine.startsWith("<text")) {
+			// empty text
+			if (trimmedStrLine.endsWith("<text/>") || 
+					trimmedStrLine.equals("<text xml:space=\"preserve\" />")){ 				
 				wikiPage.pageStructure += "        <text lang=\""+language+"\"/>\n";
 				wikiPage.wikitext="";
 				wikiPage.setEmpty(true);
@@ -89,13 +104,14 @@ public class WikiPageHandler {
 	private String parseToXML(String wikitext, String pagetitle){
 		
 		wikitext = StringEscapeUtils.unescapeXml(wikitext); // unescape XML tags
-		wikitext = cleanPattern(wikitext);
+		wikitext = cleanPattern(wikitext);		
 		
 		try{
 			// italic and bold are not repaired because they have wiki-mark-ups
 			wikitext = tagSoupParser.generate(wikitext,true);
-			wikitext = swebleParser.parseText(wikitext.trim(), pagetitle,language);
-		}catch (Exception e) {
+			wikitext = swebleParser.parseText(wikitext.trim(), pagetitle, language);
+		}
+		catch (Exception e) {
 			wikiStatistics.addSwebleErrors();
 			wikiStatistics.errorPages.add(pagetitle);
 			wikitext="";
@@ -118,7 +134,7 @@ public class WikiPageHandler {
 		StringBuffer sb = new StringBuffer();
         while(matcher.find()){
         	String replace = StringEscapeUtils.escapeHtml(matcher.group(1));
-        	replace = matcher.quoteReplacement(replace);
+        	replace = Matcher.quoteReplacement(replace);
         	matcher.appendReplacement(sb,replace);
         }
         matcher.appendTail(sb);		        
@@ -132,6 +148,11 @@ public class WikiPageHandler {
 	}
 	
 	public void validateXML(WikiPage wikiPage) {
+		
+		if (wikiPage == null){
+			throw new IllegalArgumentException("WikiPage cannot be null.");
+		}
+
 		String t="";
 		try{ //test XML validity
 			 t = "<text>"+wikiPage.wikitext+"</text>";
@@ -147,7 +168,7 @@ public class WikiPageHandler {
 			wikiPage.pageStructure = tagSoupParser.generate(wikiPage.pageStructure, false);
 		} 
 		catch (Exception e) { 
-			System.out.println("Outer Error: "+wikiPage.getPageTitle());
+			System.err.println("Outer Error: "+wikiPage.getPageTitle());
 			wikiStatistics.addPageStructureErrors();
 			e.printStackTrace(); 
 		}		

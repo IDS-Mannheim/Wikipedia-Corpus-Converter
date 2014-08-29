@@ -39,12 +39,17 @@ public class WikiPage {
 	}
 
 	public void setPageIndex(boolean isDiscussion, String talk) throws IOException {
+		
+		if (talk==null || talk.isEmpty()){
+			throw new IllegalArgumentException("Talk cannot be null or empty.");
+		}
+		
 		int start = talk.length() +1;
 		if (isDiscussion){						
 			pageIndex = Utilities.normalizeIndex(this.pageTitle.substring(start, start+1), indexList);
 		}
 		else {
-			pageIndex = Utilities.normalizeIndex(this.pageTitle.substring(0,1), indexList);
+			pageIndex = Utilities.normalizeIndex(this.pageTitle.substring(0,1), indexList);			
 		}
 	}
 

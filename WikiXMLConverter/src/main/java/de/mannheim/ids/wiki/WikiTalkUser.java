@@ -22,6 +22,14 @@ public class WikiTalkUser {
 	private String userUri;
 	
 	public WikiTalkUser(String language, String userUri) throws IOException {		
+		
+		if (language==null || language.isEmpty()){
+			throw new IllegalArgumentException("Language cannot be null or empty.");
+		}
+		if (userUri==null || userUri.isEmpty()){
+			throw new IllegalArgumentException("UserUri cannot be null or empty.");
+		}
+		
 		user = new HashMap<String, String>();
 		userWriter = Utilities.createWriter(language+"wiki-talk-user.xml");
 		userWriter.append("<listPerson>\n");		
@@ -30,7 +38,12 @@ public class WikiTalkUser {
 		getTalkUser("unknown","",false);		
 	}
 	
-	public String getTalkUser(String username, String speaker, boolean sigFlag) throws IOException {
+	public String getTalkUser(String username, String speaker, 
+			boolean sigFlag) throws IOException {
+		if (username == null){
+			throw new IllegalArgumentException("Username cannot be null.");
+		}		
+		
 		if (!user.containsKey(username)){
 			String userId = generateUserId();
 			user.put(username, userId);	
@@ -45,7 +58,13 @@ public class WikiTalkUser {
 		return userId;
 	}	
 	
-	private void createUser(String username,String userId, String speaker, boolean sigFlag) throws IOException{
+	private void createUser(String username,String userId, String speaker, 
+			boolean sigFlag) throws IOException{
+		
+		if (speaker == null){
+			throw new IllegalArgumentException("Speaker cannot be null.");
+		}
+		
 		userWriter.append("   <person xml:id=\""+userId+"\">\n");
 		userWriter.append("      <persName>"+username+"</persName>\n");
 		

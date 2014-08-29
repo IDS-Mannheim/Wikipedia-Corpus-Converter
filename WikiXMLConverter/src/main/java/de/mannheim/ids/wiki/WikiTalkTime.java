@@ -17,7 +17,12 @@ public class WikiTalkTime {
 	private OutputStreamWriter timeWriter; 
 	private int counter;
 	
-	public WikiTalkTime(String language) throws IOException{	
+	public WikiTalkTime(String language) throws IOException{
+		
+		if (language==null || language.isEmpty()){
+			throw new IllegalArgumentException("Language cannot be null or empty.");
+		}
+		
 		timeWriter = Utilities.createWriter(language+"wiki-talk-timeline.xml");
 		counter=0;
 		
@@ -25,6 +30,11 @@ public class WikiTalkTime {
 	}	
 	
 	public String getTimeId(String timeline) throws IOException{
+		
+		if (timeline==null || timeline.isEmpty()){
+			throw new IllegalArgumentException("Timeline cannot be null or empty.");
+		}
+		
 		String timeId = generateTimeId();
 		timeWriter.append("   <when xml:id=\""+timeId+"\"");
 		timeWriter.append(" absolute=\""+timeline+"\"/>\n");

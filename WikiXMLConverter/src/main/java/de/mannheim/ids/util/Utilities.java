@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * 
@@ -17,6 +16,11 @@ import java.util.List;
  */
 public class Utilities {
 	public static void createDirectory(String directory){
+		
+		if (directory==null || directory.isEmpty()){
+			throw new IllegalArgumentException("Directory cannot be null or empty.");
+		}
+		
 		File dir = new File(directory);
 		if (!dir.exists()) { dir.mkdirs(); }
 	}

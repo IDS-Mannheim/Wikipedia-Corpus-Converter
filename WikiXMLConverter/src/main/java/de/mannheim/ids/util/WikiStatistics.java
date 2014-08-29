@@ -154,6 +154,10 @@ public class WikiStatistics {
 	}
 	
 	public void countStatistics(boolean isDiscussion, WikiPage wikiPage) {
+		
+		if (wikiPage == null){
+			throw new IllegalArgumentException("WikiPage cannot be null.");
+		}
 		if (isDiscussion){
 			if (!wikiPage.wikitext.isEmpty()){ addTotalDiscussions(); }
 			else if (wikiPage.isRedirect()){ addRedirectDiscussions(); }
