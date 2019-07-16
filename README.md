@@ -1,5 +1,9 @@
-Wikipedia Corpus Converter
-=========================
+# ** THIS PROJECT IS MOVED TO [Wikipedia Corpus Builder](https://github.com/IDS-Mannheim/Wikipedia-Corpus-Builder)
+
+
+
+## Wikipedia Corpus Converter
+
 
 This project was developed at Institut für Deutsche Sprache (IDS) in 
 Mannheim, Germany. The aim of the project was to automatically generate 
